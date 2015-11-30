@@ -1,0 +1,8 @@
+[package]
+name = "json_nom"
+version = "0.1.0"
+authors = ["Oscar Deits <odeits@vidder.com>"]
+
+[dependencies]
+nom = "~1.0.0"
+
