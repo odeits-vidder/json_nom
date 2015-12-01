@@ -36,6 +36,7 @@ named!(null_value <i64>, chain!(opt!(multispace) ~ tag!("null") ~ opt!(multispac
 
 named!(json_value <i64>,
   alt!(
+    json_obj |
     null_value |
     boolean_value |
     factor |
@@ -93,5 +94,6 @@ fn json_key_value_pair_test() {
   assert_eq!(json_key_value_pair(&b"\"some key\" : null"[..]), IResult::Done(&b""[..], 0) );
   assert_eq!(json_key_value_pair(&b"\"some key\" : 12345"[..]), IResult::Done(&b""[..], 0) );
   assert_eq!(json_key_value_pair(&b"\"some key\" : true"[..]), IResult::Done(&b""[..], 0) );
+  assert_eq!(json_key_value_pair(&b"\"some key\" : { }"[..]), IResult::Done(&b""[..], 0) );
 }
 
