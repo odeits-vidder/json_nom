@@ -18,16 +18,7 @@ named!(factor<i64>,
   )
 
 );
-
-named!(true_value <i64>, chain!(opt!(multispace) ~ tag!("true") ~ opt!(multispace), || { return 0;}));
-named!(false_value <i64>, chain!(opt!(multispace) ~ tag!("false") ~ opt!(multispace), || { return 0;}));
-
-named!(boolean_value <i64>, alt!(true_value | false_value ));
-
-named!(null_value <i64>, chain!(opt!(multispace) ~ tag!("null") ~ opt!(multispace), || { return 0;}));
-
-
-named!(json_key <i64>, chain!(
+named!(quoted_str <i64>, chain!(
    opt!(multispace)
   ~tag!("\"")
   ~many0!(
@@ -36,15 +27,22 @@ named!(json_key <i64>, chain!(
   ~tag!("\""),
   || {return 0;}));
 
+named!(true_value <i64>, chain!(opt!(multispace) ~ tag!("true") ~ opt!(multispace), || { return 0;}));
+named!(false_value <i64>, chain!(opt!(multispace) ~ tag!("false") ~ opt!(multispace), || { return 0;}));
+
+named!(boolean_value <i64>, alt!(true_value | false_value ));
+
+named!(null_value <i64>, chain!(opt!(multispace) ~ tag!("null") ~ opt!(multispace), || { return 0;}));
+
 named!(json_value <i64>,
   alt!(
     null_value |
     boolean_value |
     factor |
-    json_key
+    quoted_str
   ));
 
-named!(json_key_value_pair <i64>, chain!(json_key ~ opt!(multispace) ~tag!(":") ~ json_value, || {return 0;}));
+named!(json_key_value_pair <i64>, chain!(quoted_str ~ opt!(multispace) ~tag!(":") ~ json_value, || {return 0;}));
 
 named!(json_empty_obj <i64>, chain!(opt!(multispace) ~ tag!("{") ~opt!(multispace) ~ tag!("}"), || {return 0;}));
 
@@ -73,11 +71,11 @@ fn json_obj_test() {
 }
 
 #[test]
-fn json_key_test() {
-  assert_eq!(json_key(&b"\"\""[..]), IResult::Done(&b""[..], 0) );
-  assert_eq!(json_key(&b"\" \""[..]), IResult::Done(&b""[..], 0) );
-  assert_eq!(json_key(&b"\"somekey\""[..]), IResult::Done(&b""[..], 0) );
-  assert_eq!(json_key(&b"\"some key\""[..]), IResult::Done(&b""[..], 0) );
+fn quoted_str_test() {
+  assert_eq!(quoted_str(&b"\"\""[..]), IResult::Done(&b""[..], 0) );
+  assert_eq!(quoted_str(&b"\" \""[..]), IResult::Done(&b""[..], 0) );
+  assert_eq!(quoted_str(&b"\"somekey\""[..]), IResult::Done(&b""[..], 0) );
+  assert_eq!(quoted_str(&b"\"some key\""[..]), IResult::Done(&b""[..], 0) );
 }
 
 #[test]
