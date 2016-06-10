@@ -8,33 +8,42 @@ use std::str;
 use std::str::FromStr;
 
 
-named!(factor<i64>,
+struct Value{
+    b: Option<bool>,
+    num: Option<i64>,
+    s: Option<String>,
+    o: Option<(String, Box<Value>)>,
+    a: Option<Vec<Value>>
+}
+
+
+named!(factor<Value>,
   map_res!(
     map_res!(
       delimited!(opt!(multispace), digit, opt!(multispace)),
       str::from_utf8
     ),
-    FromStr::from_str
+    |arg| Value{num = FromStr::from_str(arg)}
   )
 
 );
-named!(quoted_str <i64>, chain!(
+named!(quoted_str <Value>, chain!(
    opt!(multispace)
   ~tag!("\"")
   ~many0!(
      alt!(alphanumeric | multispace)
      )
   ~tag!("\""),
-  || {return 0;}));
+  |arg| Value{ s = str::from_utf8(arg)};
 
-named!(true_value <i64>, chain!(opt!(multispace) ~ tag!("true") ~ opt!(multispace), || { return 0;}));
-named!(false_value <i64>, chain!(opt!(multispace) ~ tag!("false") ~ opt!(multispace), || { return 0;}));
+named!(true_value <Value>, chain!(opt!(multispace) ~ tag!("true") ~ opt!(multispace), || Value {b = true}));
+named!(false_value <Value>, chain!(opt!(multispace) ~ tag!("false") ~ opt!(multispace), || Value {b = false}));
 
-named!(boolean_value <i64>, alt!(true_value | false_value ));
+named!(boolean_value <Value>, alt!(true_value | false_value ));
 
-named!(null_value <i64>, chain!(opt!(multispace) ~ tag!("null") ~ opt!(multispace), || { return 0;}));
+named!(null_value <Value>, chain!(opt!(multispace) ~ tag!("null") ~ opt!(multispace), || Value{} ));
 
-named!(json_value <i64>,
+named!(json_value <Value>,
   alt!(
     json_obj |
     null_value |
@@ -43,11 +52,11 @@ named!(json_value <i64>,
     quoted_str
   ));
 
-named!(json_key_value_pair <i64>, chain!(quoted_str ~ opt!(multispace) ~tag!(":") ~ json_value, || {return 0;}));
+named!(json_key_value_pair <Value>, chain!(key: quoted_str ~ opt!(multispace) ~tag!(":") ~ val: json_value, || Value{o = (key, val)}));
 
-named!(json_empty_obj <i64>, chain!(opt!(multispace) ~ tag!("{") ~opt!(multispace) ~ tag!("}"), || {return 0;}));
+named!(json_empty_obj <Value>, chain!(opt!(multispace) ~ tag!("{") ~opt!(multispace) ~ tag!("}"), || Value{}));
 
-named!(json_obj <i64>,
+named!(json_obj <Value>,
 alt!(
   json_empty_obj |
   chain!(
